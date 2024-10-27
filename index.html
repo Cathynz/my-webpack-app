@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- Include the CesiumJS JavaScript and CSS files -->
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.122/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.122/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    /* Style for the toggle buttons */
+    #toggleButton, #colorButton {
+      position: absolute;
+      top: 10px;
+      z-index: 1;
+      padding: 10px;
+      background-color: white;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+    #toggleButton {
+      left: 10px;
+    }
+    #colorButton {
+      left: 130px;
+    }
+    /* Fullscreen view for the Cesium container */
+    #cesiumContainer {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <!-- Toggle Button for SkyTower Visibility -->
+  <button id="toggleButton">Toggle Sky Tower</button>
+  <!-- Toggle Button for SkyTower pinkColor -->
+  <button id="colorButton">Toggle Pink Color</button>
+
+  <div id="cesiumContainer"></div>
+
+  <script type="module">
+    //  access token needed.
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5Y2I2ODhlNS0xM2JhLTQ3ZmQtYjU3My1hZDQ5NDYyYWI3MDQiLCJpZCI6MTg0NzU4LCJpYXQiOjE3MDI4OTY0NjB9.qxLOEv2oImK6kkLYS3ybFW1wbIYdqxm24sPDSZx-5YY';
+
+    // Initialize the Cesium Viewer in the HTML element with the `cesiumContainer` ID.
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+      terrain: Cesium.Terrain.fromWorldTerrain(),
+    });
+
+    // Fly the camera to Auckland City at the Sky Tower's location
+    viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(174.7633, -36.8485, 1000) // Auckland coordinates
+    });
+
+    // Load and add the Cesium OSM Buildings layer
+    const buildingTileset = await Cesium.createOsmBuildingsAsync();
+    viewer.scene.primitives.add(buildingTileset);
+
+    // Apply style to the building tileset to identify the Sky Tower by element ID
+    buildingTileset.style = new Cesium.Cesium3DTileStyle({
+      show: {
+        conditions: [
+          ["${elementId} === 9692605", true], // Initially Show the Sky Tower element id used here
+          [true, true] // Default for other buildings
+        ]
+      }
+    });
+
+    // Toggle visibility of the Sky Tower when the button is clicked
+    let skyTowerVisible = true;
+    document.getElementById('toggleButton').addEventListener('click', () => {
+      skyTowerVisible = !skyTowerVisible;
+      buildingTileset.style = new Cesium.Cesium3DTileStyle({
+        show: {
+          conditions: [
+            ["${elementId} === 9692605", skyTowerVisible], // Toggle Sky Tower visibility
+            [true, true] // Keep other buildings visible
+          ]
+        }
+      });
+    });
+
+    // Toggle pink color for the Sky Tower when the button is clicked
+    let skyTowerPink = false;
+    document.getElementById('colorButton').addEventListener('click', () => {
+      skyTowerPink = !skyTowerPink;
+      buildingTileset.style = new Cesium.Cesium3DTileStyle({
+        show: {
+          conditions: [
+            ["${elementId} === 9692605", skyTowerVisible], // Keep Sky Tower visibility state
+            [true, true] // Keep other buildings visible
+          ]
+        },
+        color: {
+          conditions: [
+            ["${elementId} === 9692605", skyTowerPink ? "color('pink')" : "color('white')"], // Toggle Sky Tower color
+            [true, "color('white')"] // Default color for other buildings
+          ]
+        }
+      });
+    });
+  </script>
+</body>
+</html>
